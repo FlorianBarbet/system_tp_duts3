@@ -1,0 +1,27 @@
+CC = gcc
+CFLAGS = -Wall -Werror -W  -g
+LDFLAGS = 
+
+EXEC=tp1
+
+all: $(EXEC)
+
+tp1:  tp1_1.o tp1_2.o tp1_3.o
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+
+tp1_2.o: tp1_2.c
+	$(CC)$(CFLAGS)-c $< 
+
+tp1_3.o:tp1_3.c tp1_2.h
+	$(CC)$(CFLAGS)-c $< 
+
+tp1_1.o: tp1_1.c tp1_2.h tp1_3.h
+	$(CC)$(CFLAGS)-c $< 
+
+
+clean:
+	rm -rf *.o
+
+mrproper: clean
+	rm -rf $(EXEC)

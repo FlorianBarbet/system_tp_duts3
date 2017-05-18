@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="iso-8859-15"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr" lang="fr">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-15"/>
+    <meta name="author" content="Christophe Rippert (rippert@lifl.fr)"/>
+    <style type="text/css">
+@import "style.css";
+@media screen {
+  body {margin-left:15em;margin-right:15em;}
+  dt {font-weight:bold;}
+  code {background-color:silver; padding-left:.2em; padding-right:.2em;}
+  em.small {font-size:13px;}
+}
+    </style>
+    <title>Christophe Rippert - La commande make</title>
+  </head>
+
+  <body>
+    <h1><a name="top">Make</a></h1>
+
+    <div id="menu">
+      <ul>
+        <li><a href="#top">Make</a></li>
+        <li><a href="#principes">Principes</a></li>
+        <li><a href="#format">Format</a></li>
+        <li><a href="#syntaxe">Syntaxe</a></li>
+        <li><a href="#fonctionnement">Fonctionnement</a></li>
+        <li><a href="#constantes">Constantes</a></li>
+        <li><a href="#cibles">Cibles particulières</a></li>
+        <li><a href="#implicites">Règles implicites</a></li>
+        <li><a href="#raccourcis">Raccourcis</a></li>
+        <li><a href="#generiques">Règles génériques</a></li>
+        <li><a href="#recursif">Appel récursif</a></li>
+        <li><a href="#exemple">Exemple complet</a></li>
+        <li><a href="#references">Rèférences</a></li>
+      </ul>
+    </div>
+  
+    <h2><a name="principes">Principes</a></h2>
+  
+    <p>Make est un utilitaire permettant d'automatiser la compilation de
+    logiciels. Il permet de ne recompiler que les modules ayant été modifiés
+    depuis la dernière compilation. Il se base sur un fichier décrivant les
+    relations entre les modules et les actions à effectuer : le Makefile. Ce
+    fichier doit s'appeler Makefile pour que make puisse le trouver
+    automatiquement. Si on lui donne un autre nom, il faut lancer make avec
+    l'option -f&nbsp;:</p>
+
+    <pre>make -f MonMakefile</pre>
+
+
+    <h2><a name="format">Format d'un Makefile</a></h2>
+
+    <p>Un Makefile est un fichier texte dans lequel on trouve principalement
+    des déclarations de constantes et des règles. Les déclarations de
+    constantes facilitent la lecture et la modification du Makefile. Les
+    règles décrivent le travail à effectuer par make. Elles doivent être
+    écrites selon une syntaxe très stricte.</p>
+
+
+    <h2><a name="syntaxe">Syntaxe des règles</a></h2> 
+
+    <h3>Cas général</h3>
+
+    <p>Une règle doit respecter la syntaxe suivante&nbsp;:</p>
+ 
+    <pre>
+&lt;cibles&gt;: &lt;dépendances&gt; &lt;retour à la ligne&gt;
+&lt;tabulation&gt; &lt;commande&gt; &lt;retour à la ligne&gt;
+&lt;tabulation&gt; &lt;commande&gt; &lt;retour à la ligne&gt; 
+...</pre>
+
+    <dl>
+      <dt>Les cibles&nbsp;:</dt>
+      <dd>sont les fichiers qui seront générés par les actions.<br/>
+      <em><strong>Note</strong>&nbsp;: on ne traitera ici que des Makefiles où
+      la liste des cibles de chaque règle ne comporte qu'un seul
+      fichier.</em></dd>
+   
+      <dt>Les dépendances&nbsp;:</dt>
+      <dd>sont les fichiers nécessaires à la génération des cibles.</dd>
+   
+      <dt>Les actions&nbsp;:</dt>
+      <dd>sont les commandes à exécuter pour générer les cibles à partir des
+      dépendances.</dd>
+    </dl>
+
+    <p>Exemple&nbsp;:</p>
+    <pre>
+prog.o: proc.c
+        gcc -c -o proc.o proc.c</pre>
+
+    <h3>Erreurs fréquentes</h3>
+
+    <ul>
+      <li>Insérer des retours à la lignes superflus. Certains éditeurs de
+      texte insèrent automatiquement des retours à la ligne lorsqu'une ligne
+      de texte dépasse un certain nombre de caractères
+      (<em>autowrap</em>). Pour couper une ligne trop longue, utiliser
+      l'antislash (barre de fraction
+      inversée&nbsp;<code>\</code>). Exemple&nbsp;:
+      <pre>
+cible: dep1 dep2 dep3 dep4 dep5 dep6 \
+ dep7 dep8 dep9
+        command</pre>
+      </li>
+   
+      <li>Remplacer les tabulations par des espaces. Certains éditeurs de
+      texte remplacent automatiquement les tabulations par un nombre d'espaces
+      donné (<em>soft tabs</em>).</li>
+    </ul>
+
+ 
+    <h2><a name="fonctionnement">Fonctionnement</a></h2>
+
+    <p>Lorsqu'on lance make sans argument, il prend la cible de la première
+    règle comme cible principale. On peut aussi préciser la cible principale
+    explicitement&nbsp;: <code>make prog.o</code>. On détaille le
+    fonctionnement de make sur un exemple&nbsp;:</p>
+    <pre>
+# Règle 1
+prog: prog.o module.o
+        gcc -o prog prog.o module.o
+
+# Règle 2
+prog.o: prog.c
+        gcc -c prog.c
+
+# Règle 3
+module.o: module.c
+        gcc -c module.c</pre>
+
+    <p>L'utilisateur a écrit un programme en C composé de deux fichiers,
+    prog.c et module.c. Il lance make pour compiler son programme. La cible
+    principale est celle de la première règle, à savoir prog.</p>
+
+    <ol>
+      <li>Make vérifie si le fichier prog existe, ce n'est pas le cas.</li>
+
+      <li>Il cherche les fichiers prog.o et module.o, qui n'existent pas non
+      plus.</li>
+
+      <li>Il cherche une règle lui permettant de construire prog.o et la
+      trouve (règle 2). Il cherche le fichier prog.c et le trouve. Il exécute
+      l'action <code>gcc -c prog.c</code> correspondant à la règle 2. Le
+      fichier prog.o existe donc maintenant.
+      </li>
+
+      <li>Make cherche une règle lui permettant de construire module.o et la
+      trouve (règle 3). Il cherche le fichier module.c et le trouve. Il
+      exécute l'action <code>gcc -c module.c</code> correspondant à la règle
+      3. Le fichier module.o existe donc maintenant.</li>
+
+      <li>Puisque les fichiers prog.o et module.o existent, make peut
+      appliquer l'action <code>gcc -o prog prog.o module.o</code>
+      correspondant à la règle 1. Le fichier prog existe donc
+      maintenant&nbsp;: la cible principale a été générée, make s'arrète avec
+      succés.</li>
+    </ol>
+
+    <p>L'utilisateur relance immédiatement make.</p>
+
+    <ol>
+      <li>Make vérifie si le fichier prog existe et c'est le cas.</li>
+      <li>Il cherche alors une règle permettant de construire prog.o et trouve
+      la règle 2. Il cherche alors une règle permettant de construire prog.c
+      qui est la seule dépendance de prog.o et n'en trouve pas. Il considère
+      donc que prog.c est à jour.</li>
+      <li>Il compare alors la date de dernière modification de prog.o avec
+      celle de prog.c. Puisque prog.o est plus récent que prog.c, il considère
+      que prog.o est à jour.</li>
+      <li>Il fait de même avec module.o et module.c, d'après la règle
+      3. Puisque prog.o et module.o sont à jour, make considère que prog l'est
+      aussi.</li>
+      <li>Il s'arrète donc en affichant un message du type «Target prog is up
+      to date.» et aucune action n'est exécutée.</li>
+    </ol>
+
+    <p>L'utilisateur modifie le fichier prog.c et relance make. Make remonte
+    jusqu'à prog.c comme précédement, mais cette fois-ci, prog.o est plus
+    ancien que prog.c qui vient juste d'être modifié. Make exécute donc la
+    commande <code>gcc -c -o prog.o prog.c</code> pour mettre à jour
+    prog.o. Le fichier module.c n'ayant pas été modifié, make considère
+    module.o à jour. Mais comme prog.o vient d'être regénéré, il est donc plus
+    récent que prog, qui n'est donc plus à jour. Donc make exécute la commande
+    <code>gcc -o prog prog.o module.o</code> pour mettre à jour prog et
+    s'arrète avec succés.</p>
+
+    <p>On voit donc que Make travaille sur le graphe des dépendances entre les
+    fichiers, chaque noeud étant étiquetté avec sa date de dernière
+    modification. On notera que ce graphe des dépendances ne doit pas contenir
+    de cycle (eg&nbsp;: si A dépend de B qui dépend de C qui dépend de A).</p>
+
+
+    <h2><a name="constantes">Constantes</a></h2>
+
+    <p>Make permet d'utiliser des constantes dans un Makefile afin d'en
+    faciliter la lecture et la mise à jour. Ainsi, on pourra écrire&nbsp;:</p>
+
+    <pre>
+CC = gcc
+
+prog.o: prog.c
+        $(CC) -c prog.c
+
+module.o: module.c
+        $(CC) -c module.c</pre>
+ 
+    <p>Ceci permettra de changer facilement de compilateur C sans avoir à
+    modifier les règles. Par convention, les constantes s'écrivent en
+    majuscules. Comme on le voit, un nom de constante doit être entouré de
+    <code>$()</code> lorsqu'on veut lire sa valeur.</p>
+
+
+    <h2><a name="cibles">Cibles particulières</a></h2>
+
+    <p>Il est parfois utile de définir des cibles qui ne sont pas des
+    fichiers. Par exemple, pour supprimer les fichiers intermédiaires lors de
+    la compilation précédente, on pourrait écrire&nbsp;:</p>
+    <pre>
+clean:
+        rm -f *.o</pre>
+
+    <p>Make accepte les règles sans dépendance, dans ce cas le fichier est
+    considéré à jour s'il existe. Ce Makefile simpliste fonctionnera
+    correctement la plupart du temps. Il existe cependant un cas dans lequel
+    il ne se comportera pas comme prévu&nbsp;: s'il existe dans le répertoire
+    courant un fichier ou un répertoire de nom clean, make affichera le
+    message «Target clean is up to date» et ne fera rien. C'est assez logique
+    puisque comme on l'a dit, un fichier cible sans dépendance est considéré
+    comme étant à jour s'il existe. Pour éviter cette erreur, il suffit de
+    rajouter la directive <code>.PHONY: clean</code> au sommet du
+    Makefile. Ainsi, make sait que clean n'est pas un fichier mais une cible
+    particulière (<em>phony target</em>). Cette directive a de plus un effet
+    de bord intéressant. Par défaut, make s'arrète dès qu'une erreur est
+    détectée.  Ainsi, avec le Makefile&nbsp;:</p>
+
+    <pre>
+clean:
+        rm -f *.bak rm -f *.o</pre>
+    
+    <p>s'il n'existe pas de fichier .bak dans le répertoire courant, rm va
+    renvoyer un code d'erreur et make s'arrêtera sans avoir effacé les
+    fichiers .o. Avec la directive <code>.PHONY</code>, make exécute toutes
+    les commandes de la règle correspondante et ignore les erreurs.</p>
+
+
+    <h2><a name="implicites">Règles implicites</a></h2>
+
+    <p>Make est capable de générer certains fichiers même si on ne lui donne
+    pas de règle appropriée. En effet, certaines commandes sont assez
+    standard, comme la compilation d'un fichier .c en .o par exemple. Ainsi,
+    dans l'exemple ci-dessus, si make n'avait pas trouvé de règle pour
+    construitre prog.o à partir de prog.c, il aurait tout de même été capable
+    de le faire. Cependant, l'utilisation de ces règles implicites induit des
+    difficultés supplémentaires lors de la rédaction du Makefile. On
+    désactivera donc cette fonction de make en utilisant la directive
+    <code>.SUFFIXES:</code>.</p>
+
+
+    <h2><a name="raccourcis">Raccourcis</a></h2>
+
+    <p>Make permet d'utiliser des raccourcis pour éviter d'avoir à taper des
+    longues listes de fichiers. On présente ici les trois raccourcis les plus
+    utiles&nbsp;:</p>
+
+    <dl>
+      <dt>$@</dt>
+      <dd>représente la liste des cibles.</dd>
+      
+      <dt>$^</dt>
+      <dd>représente la liste des dépendances.</dd>
+      
+      <dt>$&lt;</dt>
+      <dd>représente la première dépendance (ie&nbsp;: la plus à gauche dans la
+      liste).</dd>
+    </dl>
+
+    <p>Exemple&nbsp;:</p>
+    <pre>
+prog: prog.o module.o
+        gcc -o $@ $^
+
+fct.o: fct.c fct.h
+        gcc -c -o $@ $&lt;</pre>
+
+    <p>Ces raccourcis sont surtout utiles lorsqu'on utilise des règles
+    génériques.</p>
+
+
+    <h2<a name="generiques">Règles génériques</a></h2>
+
+    <p>Dans l'exemple ci-dessus, on écrit deux règles très similaires pour
+    générer prog.o et module.o&nbsp;:</p>
+
+    <pre>
+prog.o: prog.c
+        gcc -c -o prog.o prog.c
+
+module.o: module.c
+        gcc -c -o module.o module.c</pre>
+
+    <p>Pour éviter d'écrire ces deux règles, on peut définir une règle
+    générique&nbsp;:</p>
+
+    <pre>
+%.o: %.c
+        gcc -c -o $@ $^</pre>
+
+    <p>Cette règle peut être lue comme «<em>chaque fichier .o dépend du
+    fichier .c de même nom et peut être généré en utilisant la commande gcc -c
+    -o $@ $^</em>». On remarque que l'on est ici obligé d'utiliser les
+    raccourcis puisque les noms des fichiers sont variables.</p>
+
+
+    <h2><a name="recursif">Appel récursif à make</a></h2>
+
+    <p>Il est possible d'utiliser make dans une commande. On parle alors
+    d'appel récursif. Par exemple&nbsp;:</p>
+
+    <pre>
+clean:
+        rm -f *.o
+
+real-clean:
+        make clean
+        rm -f prog</pre>
+
+    <p>Si l'on veut exécuter cette commande dans un autre répertoire, il
+    suffit d'utiliser l'option <code>-C &lt;repertoire&gt;</code>.</p>
+
+    <pre>
+clean:
+        make -C subdir/ clean
+        rm -f *.o</pre>
+
+    <p>Lorsqu'il exécutera la commande associée à la cible clean, make entrera
+    dans le répertoire subdir, lancera la commande <code>make clean</code> qui
+    utilisera le Makefile présent dans le répertoire subdir, puis une fois
+    cette commande terminée, reviendra dans le répertoire de départ et
+    exécutera <code>rm -f *.o</code>. Cette option est utile pour éviter
+    d'avoir à écrire de très gros Makefiles. En général, on place un Makefile
+    par répertoire, dans lequel on écrit les règles correspondant aux fichiers
+    présents dans ce répertoire.</p>
+
+ 
+    <h2><a name="exemple">Exemple complet</a></h2>
+
+    <h3>Makefile</h3>
+
+    <pre>
+# Ces cibles ne sont pas des vrais fichiers
+.PHONY: clean, install, real-clean
+
+# On désactive toutes les règles implicites
+.SUFFIXES:
+
+# Déclarations de constantes
+CC = gcc
+CFLAGS = -O4 -W -Wall
+LD = gcc
+LDFLAGS = -s
+
+# $@ == prog.exe et $^ == main.o fct1.o fct2.o
+prog.exe: main.o fct1.o fct2.o
+        $(LD) $(LDFLAGS) -o $@ $^
+
+# Règle générique : $&lt; == le fichier .c compilé
+%.o: %.c
+        $(CC) $(CFLAGS) -c -o $@ $&lt;
+
+clean:
+        rm -f *.o
+
+# Appel récursif à make avec ce Makefile
+real-clean:
+        make clean
+        rm -f bin/prog.exe
+
+# Appel récursif à make avec un Makefile dans un autre répertoire
+install:
+        mv prog.exe bin/
+        make -C bin/ install</pre>
+
+    <h3>bin/Makefile</h3>
+
+    <pre>
+.PHONY: install
+
+.SUFFIXES:
+
+install:
+        chmod 755 prog.exe</pre>
+
+    <h2><a name="references">Références</a></h2>
+    
+    <ul>
+      <li>
+        <span class="livre">Manuel de GNU make</span><br/>
+        <a href="http://www.gnu.org/software/make/">http://www.gnu.org/software/make/</a>
+      </li>
+
+      <li>
+        <span class="livre">Managing Projects with make, 3rd edition</span><br/>
+        <span class="auteur"> Andy Oram, Steve Talbott, Robert Mecklenburg</span><br/>
+        <span class="editeur">O'Reilly, 2004</span><br/>
+        <span class="isbn">0596006101</span>
+      </li>
+    </ul>
+
+    <div id="footer">
+      Copyright &copy; 2004 Christophe Rippert<br/>
+      <a href="http://validator.w3.org/check/referer">XHTML</a>
+      -- <a href="http://jigsaw.w3.org/css-validator/check/referer">CSS 2.0</a>
+      -- <a href="http://morcandel.free.fr/mimine">Mimine 1.0</a><br />
+      <!--ts start-->Fichier /usr/local/home/bruno/enseignement/current/iut/progsys/deroulement/doc/make.html modifié le 14 décembre 2004 à 19h34<!--ts stop-->
+    </div>
+  </body>
+</html>
+ 
+<!-- Local Variables: -->
+<!-- mode: nxml -->
+<!-- time-stamp-line-limit: -15 -->
+<!-- time-stamp-start: "[<][!][-][-]ts start[-][-][>]" -->
+<!-- time-stamp-end: "[<][!][-][-]ts stop[-][-][>]" -->
+<!-- time-stamp-format: "Fichier %F modifié le %02d %:b %:y à %02Hh%02M" -->
+<!-- time-stamp-active: t -->
+<!-- End: -->

@@ -1,0 +1,14 @@
+char * t0 = "123456";
+	char * t1 = "";
+	char * t2 = "\nBonjour";
+
+	char * s0 = saisie();
+
+	char * r0 = miroir(t0);
+	char * r1 = miroir(t1);
+	char * r2 = miroir(t2);	
+
+	printf("Debut de test saisie\ntest\n%s\nFin test s\n---------------\n",s0);
+	printf("Debut de test miroir\nt1 : %s = %s\n",t0, r0);
+	printf("t2 : %s = %s\n",t1,r1);
+	printf("t3 : %s = %sFin de test m\n----------------\n",t2,r2);

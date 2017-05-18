@@ -1,0 +1,29 @@
+Q.1
+
+	a.out
+
+Q.2 
+
+	La fonction_a retourne 42 ; parce que l'operateur utilisé dans le "if(){}" n'est pas le bon il faut un "=="
+
+Q.6
+
+tp1_3.c: In function ‘fonction_b’:
+tp1_3.c:8:3: error: implicit declaration of function ‘fonction_a’ [-Werror=implicit-function-declaration]
+   printf("Le retour de la fonction_a est %d\n", fonction_a(param));
+
+
+//Reponse\\
+*Les fichiers ne sont pas lié directement, soit la fonction_a n'existe pas *dans le fichier tp1_3, il prend cela pour un avertissement il faut donc *soit l'inclure soit l'externaliser(extern ; le prototypage).
+//Reponse\\
+
+
+tp1_1.c:5:2: error: implicit declaration of function ‘fonction_b’ [-Werror=implicit-function-declaration]
+  fonction_b(10);
+  ^
+tp1_1.c:6:2: error: implicit declaration of function ‘fonction_a’ [-Werror=implicit-function-declaration]
+  fonction_a(20);
+  ^
+//Reponse\\
+*Même erreur que précédemment pour le tp1_1 qui contient que le main, ne *possède ni la fonction_a ni la fonction_b soit il faut les lier.
+//Reponse\\

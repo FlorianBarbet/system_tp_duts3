@@ -1,0 +1,46 @@
+# This Makefile can be included in a project to ease the compiling
+# 
+# Include compile option parameters
+include $(LIB_DIR)/Makefile.vars
+## Library configuration
+
+MBED_PATH=$(shell mount | grep MBED | cut -d\  -f3)
+# If your mount command is not completly compliant with the linux one, you can try to use awk instead of cut
+#MBED_PATH=$(shell mount | grep MBED | awk '{ print $$3 }')
+
+
+## Compile flags
+CFLAGS=-mthumb -mcpu=cortex-m3 -fno-builtin -ffreestanding -Wall -Winline -O0 -DSTACK_END=$(STACK_END)
+LDFLAGS=-nostdlib -L$(LIB_DIR)
+
+SRCS=$(SRC) $(wildcard $(LIB_DIR)/*.c)
+OBJS=$(SRCS:.c=.o)
+
+ELF=$(OUTPUT_NAME).elf
+BIN=$(OUTPUT_NAME).bin
+
+## Common rules
+all:	$(BIN)
+
+$(BIN): $(ELF)
+	$(OBJCOPY) -O binary -j .text -j .data $^ $@
+
+$(ELF): $(OBJS) $(LIB_DIR)/base.ld
+	$(LD) -o $@ $(OBJS) -Wl,-T,base.ld $(LDFLAGS)
+
+clean:
+	$(RM) $(OBJS) *~
+
+mrproper: clean
+	$(RM) $(ELF) $(BIN)
+
+program: $(BIN)
+	cp $+ $(MBED_PATH) && sync
+
+reset:
+	$(LIB_DIR)/send_break /dev/ttyACM0
+
+dump: $(ELF)
+	$(OBJDUMP) -sSt $^
+
+.DEFAULT: all

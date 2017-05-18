@@ -1,0 +1,1 @@
+test_bmp2.sh
